@@ -1,5 +1,14 @@
 # SimpleBootstrapTable
 
+## Potential Future Enhancements
++ Different element to display while dragging
++ Removing the dragging item from a list and displaying a gap in the table where the dragging item will be dropped
++ 2 "missions" that can each have up to 3 Heroes assigned to them. 
+  + Both missions are depicted as tables
+  + You can drag heroes from your roster to one or the other mission, as well as from missions back to the roster, or between missions
+
+# Boilerplate Readme stuff from the CLI
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 6.0.8.
 
 ## Development server
