@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 
 @Component({
   selector: 'app-table',
@@ -8,8 +8,10 @@ import { BehaviorSubject } from 'rxjs';
   styleUrls: ['./table.component.css']
 })
 export class TableComponent implements OnInit {
+  // data
   heroes$ = new BehaviorSubject<{[name: string]: any}>({
-    'Hammerer Maccabeus': {
+    '1': {
+      id: '1',
       name: 'Hammerer Maccabeus',
       types: 'Holy/Fire',
       attack: 286,
@@ -19,7 +21,8 @@ export class TableComponent implements OnInit {
       recovery: 154,
       health: 766
     },
-    'Ethereal Moodmorph': {
+    '2': {
+      id: '2',
       name: 'Ethereal Moodmorph',
       types: 'Water/Fire',
       attack: 206,
@@ -29,7 +32,8 @@ export class TableComponent implements OnInit {
       recovery: 178,
       health: 1115
     },
-    'Dwarf Bronnis': {
+    '3': {
+      id: '3',
       name: 'Dwarf Bronnis',
       types: 'Earth/Fire',
       health: 869,
@@ -39,7 +43,8 @@ export class TableComponent implements OnInit {
       recovery: 153,
       speed: 179
     },
-    'Lady Sabrina': {
+    '4': {
+      id: '4',
       name: 'Lady Sabrina',
       types: 'Water',
       health: 1336,
@@ -49,7 +54,8 @@ export class TableComponent implements OnInit {
       recovery: 105,
       speed: 139
     },
-    'Techno Fox': {
+    '5': {
+      id: '5',
       name: 'Techno Fox',
       types: 'Electric',
       health: 712,
@@ -59,7 +65,8 @@ export class TableComponent implements OnInit {
       recovery: 184,
       speed: 256
     },
-    'Cleric Typh': {
+    '6': {
+      id: '6',
       name: 'Cleric Typh',
       types: 'Holy',
       health: 716,
@@ -69,7 +76,8 @@ export class TableComponent implements OnInit {
       recovery: 272,
       speed: 229
     },
-    'Technician Dustin': {
+    '7': {
+      id: '7',
       name: 'Technician Dustin',
       types: 'Electric/Arcane',
       health: 916,
@@ -79,7 +87,8 @@ export class TableComponent implements OnInit {
       recovery: 144,
       speed: 286
     },
-    'Dancer Galileo': {
+    '8': {
+      id: '8',
       name: 'Dancer Galileo',
       types: 'Air/Holy',
       health: 517,
@@ -90,6 +99,19 @@ export class TableComponent implements OnInit {
       speed: 405
     }
   });
+
+  // table
+  orderedIds$ = new BehaviorSubject<string[]>([
+    '8',
+    '1',
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+  ]);
+  heroIdToOrderIndex$ = new BehaviorSubject<{[heroId: string]: number}>({});
   superlatives$ = new BehaviorSubject<{[superlativeName: string]: string}>({});
   tableDataSource$ = new BehaviorSubject<any[]>([]);
   displayedColumns$ = new BehaviorSubject<string[]>([
@@ -103,13 +125,29 @@ export class TableComponent implements OnInit {
     'health',
     'levelUp'
   ]);
+  draggingId$ = new BehaviorSubject<string>(null);
 
   constructor() { }
 
   ngOnInit() {
-    this.heroes$.subscribe(changedHeroData => {
-      this.tableDataSource$.next(Object.values(changedHeroData));
+    // this.orderedIds$.subscribe(orderedIds => {
+    //   const heroIdToOrderIndex: {[heroId: string]: number} = {};
+    //   for (int i = 0; i < orderedIds.length; i++) {
+    //     this.heroIdToOrderIndex[]
+    //   }
+    // })
 
+    combineLatest(this.heroes$, this.orderedIds$)
+    .subscribe(([heroes, orderedIds]) => {
+      this.tableDataSource$.next(orderedIds.map(id => heroes[id]));
+      const heroIdToOrderIndex: {[heroId: string]: number} = {};
+      for (let i = 0; i < orderedIds.length; i++) {
+        heroIdToOrderIndex[orderedIds[i]] = i;
+      }
+      this.heroIdToOrderIndex$.next(heroIdToOrderIndex);
+    });
+
+    this.heroes$.subscribe(changedHeroData => {
       const superlatives = {
         'highest-attack': null,
         'lowest-attack': null,
@@ -131,12 +169,12 @@ export class TableComponent implements OnInit {
 
           const highest = `highest-${key}`;
           if (!superlatives[highest] || hero[key] > changedHeroData[superlatives[highest]][key]) {
-            superlatives[highest] = hero.name;
+            superlatives[highest] = hero.id;
           }
 
           const lowest = `lowest-${key}`;
           if (!superlatives[lowest] || hero[key] < changedHeroData[superlatives[lowest]][key]) {
-            superlatives[lowest] = hero.name;
+            superlatives[lowest] = hero.id;
           }
         });
       });
@@ -145,8 +183,8 @@ export class TableComponent implements OnInit {
     });
   }
 
-  levelUp(heroName: string) {
-    const updatedHero = { ... this.heroes$.value[heroName] };
+  levelUp(id: string) {
+    const updatedHero = { ... this.heroes$.value[id] };
     updatedHero.attack = Math.round(updatedHero.attack * (1 + (Math.random() / 8)));
     updatedHero.defense = Math.round(updatedHero.defense * (1 + (Math.random() / 8)));
     updatedHero.speed = Math.round(updatedHero.speed * (1 + (Math.random() / 8)));
@@ -155,9 +193,33 @@ export class TableComponent implements OnInit {
     updatedHero.health = Math.round(updatedHero.health * (1 + (Math.random() / 8)));
 
     const newHeroData = { ... this.heroes$.value };
-    newHeroData[heroName] = updatedHero;
+    newHeroData[id] = updatedHero;
 
     this.heroes$.next(newHeroData);
+  }
+
+  heroDragStart(heroId: string) {
+    this.draggingId$.next(heroId);
+  }
+
+  heroDragOver(heroDraggedOverId: string) {
+    if (heroDraggedOverId === this.draggingId$.value) {
+      return;
+    }
+
+    // swap ids
+    const tempArray = this.orderedIds$.value;
+    const draggingIdx = this.heroIdToOrderIndex$.value[this.draggingId$.value];
+    const draggedOverIdx = this.heroIdToOrderIndex$.value[heroDraggedOverId];
+    tempArray[draggedOverIdx] = this.draggingId$.value;
+    tempArray[draggingIdx] = heroDraggedOverId;
+
+    this.orderedIds$.next(tempArray);
+  }
+
+  heroDragDrop() {
+    this.draggingId$.next(null);
+    console.log('The list got re-ordered and I can send a request to the server now that the order should change');
   }
 
 }
