@@ -198,17 +198,14 @@ export class TableComponent implements OnInit {
     this.heroes$.next(newHeroData);
   }
 
-  heroDragStart(event: any, heroId: string) {
+  heroDragStart(heroId: string) {
     this.draggingId$.next(heroId);
   }
 
-  heroDragOver(event: any, heroDraggedOverId: string) {
-    console.log(heroDraggedOverId);
+  heroDragOver(heroDraggedOverId: string) {
     if (heroDraggedOverId === this.draggingId$.value) {
       return;
     }
-
-    console.log('buzz');
 
     // swap ids
     const tempArray = this.orderedIds$.value;
@@ -220,8 +217,9 @@ export class TableComponent implements OnInit {
     this.orderedIds$.next(tempArray);
   }
 
-  heroDragDrop(event: any, heroId: any) {
+  heroDragDrop() {
     this.draggingId$.next(null);
+    console.log('The list got re-ordered and I can send a request to the server now that the order should change');
   }
 
 }

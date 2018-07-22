@@ -103,9 +103,9 @@
   <tr cdk-row 
       *cdkRowDef="let row; columns: displayedColumns$.value"
       [draggable]="true"
-      (dragstart)="heroDragStart(event, row.id)"
-      (dragenter)="heroDragOver(event, row.id)"
-      (dragend)="heroDragDrop(event, row)">
+      (dragstart)="heroDragStart(row.id)"
+      (dragenter)="heroDragOver(row.id)"
+      (dragend)="heroDragDrop()">
     </tr>
 
 </table>
